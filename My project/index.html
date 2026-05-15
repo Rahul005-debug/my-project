@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Pro — Productivity Suite</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<div class="app-shell">
+    <nav class="main-nav">
+        <div class="nav-brand">
+            <div class="brand-icon">⚡</div>
+            <span>FOCUS<b>PRO</b></span>
+        </div>
+
+        <div class="nav-links">
+            <button class="nav-btn active" data-tab="timer" onclick="switchTab('timer',this)"><span class="nav-icon">⏱</span> Timer</button>
+            <button class="nav-btn" data-tab="tasks" onclick="switchTab('tasks',this)"><span class="nav-icon">📝</span> Tasks</button>
+            <button class="nav-btn" data-tab="stats" onclick="switchTab('stats',this)"><span class="nav-icon">📊</span> Analytics</button>
+            <button class="nav-btn" data-tab="calendar" onclick="switchTab('calendar',this)"><span class="nav-icon">📅</span> Calendar</button>
+            <button class="nav-btn" data-tab="heatmap" onclick="switchTab('heatmap',this)"><span class="nav-icon">🟩</span> Heatmap</button>
+        </div>
+
+        <div class="nav-ambient">
+            <div class="ambient-label">Ambient Sound</div>
+            <div class="ambient-btns">
+                <button class="amb-btn" id="ambRain" onclick="toggleAmbient('rain')" title="Rain">🌧</button>
+                <button class="amb-btn" id="ambNoise" onclick="toggleAmbient('noise')" title="White Noise">🌫</button>
+                <button class="amb-btn" id="ambLofi" onclick="toggleAmbient('lofi')" title="Lo-fi">🎵</button>
+            </div>
+            <input type="range" id="ambVolume" class="vol-slider" min="0" max="1" step="0.05" value="0.4" oninput="setAmbientVolume(this.value)">
+        </div>
+
+        <div class="daily-goal-widget">
+            <div class="dg-top">
+                <span class="ambient-label">Daily Goal</span>
+                <span id="dgLabel" class="dg-label">0 / 60 min</span>
+            </div>
+            <div class="dg-bar-wrap">
+                <div class="dg-bar-fill" id="dgBarFill"></div>
+            </div>
+            <input type="range" id="dgGoalInput" class="vol-slider" min="15" max="240" step="15" value="60" oninput="updateDailyGoalTarget(this.value)">
+        </div>
+    </nav>
+
+    <div class="content-area">
+
+        <div id="timer-section" class="section active">
+            <div class="app-container">
+                <div class="timer-top-bar">
+                    <div class="mode-tabs">
+                        <button id="normalModeBtn" class="nav-tab active">Normal</button>
+                        <button id="pomodoroModeBtn" class="nav-tab">Pomodoro</button>
+                    </div>
+                    <div class="pomodoro-settings" id="settingsPanel" style="display:none;">
+                        <div class="input-group"><label>Work</label><input type="number" id="workInput" value="25" min="1"><span>min</span></div>
+                        <div class="input-group"><label>Break</label><input type="number" id="breakInput" value="5" min="1"><span>min</span></div>
+                        <div class="input-group"><label>Long Break</label><input type="number" id="longBreakInput" value="15" min="1"><span>min</span></div>
+                    </div>
+                </div>
+
+                <div class="pomodoro-dots" id="pomodoroDots" style="display:none;">
+                    <div class="pdot" id="pd1"></div>
+                    <div class="pdot" id="pd2"></div>
+                    <div class="pdot" id="pd3"></div>
+                    <div class="pdot" id="pd4"></div>
+                </div>
+
+                <div class="timer-display-area">
+                    <div class="circle-wrapper">
+                        <svg class="progress-ring" width="280" height="280" viewBox="0 0 280 280">
+                            <circle class="ring-bg" stroke-width="10" fill="transparent" r="124" cx="140" cy="140"/>
+                            <circle id="progressCircle" class="ring-fg" stroke-width="10" fill="transparent" r="124" cx="140" cy="140"/>
+                        </svg>
+                        <div class="time-text">
+                            <div id="sessionBadge" class="session-badge" style="display:none;">FOCUS</div>
+                            <div id="timerDisplay" class="timer-digits">00:00</div>
+                            <div id="currentTaskDisplay" class="current-task-label">Select a Task</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="quote-strip"><span id="quoteText"></span></div>
+
+                <div class="main-controls">
+                    <button id="startBtn" class="start-btn">START</button>
+                    <div class="sub-controls">
+                        <button id="stopBtn" class="icon-btn" disabled>PAUSE</button>
+                        <button id="resetBtn" class="icon-btn">RESET</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="tasks-section" class="section">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Tasks</h2>
+                    <div class="task-filter-bar">
+                        <button class="filter-btn active" onclick="setFilter('all',this)">All</button>
+                        <button class="filter-btn" onclick="setFilter('high',this)">🔴 High</button>
+                        <button class="filter-btn" onclick="setFilter('medium',this)">🟡 Med</button>
+                        <button class="filter-btn" onclick="setFilter('low',this)">🟢 Low</button>
+                    </div>
+                </div>
+                <div class="task-add-panel">
+                    <input type="text" id="newTaskInput" placeholder="Task name..." onkeydown="if(event.key==='Enter') addTask()">
+                    <select id="taskPriority" class="priority-select">
+                        <option value="high">🔴 High</option>
+                        <option value="medium" selected>🟡 Medium</option>
+                        <option value="low">🟢 Low</option>
+                    </select>
+                    <input type="date" id="taskDueDate" class="date-input">
+                    <button class="add-task-btn" onclick="addTask()">Add</button>
+                </div>
+                <ul id="taskList" class="task-list"></ul>
+            </div>
+        </div>
+
+        <div id="stats-section" class="section">
+            <div class="card stats-card">
+                <h2>Analytics</h2>
+                <div class="stats-grid">
+                    <div class="stat-box"><small>Sessions</small><b id="statTotalSessions">0</b></div>
+                    <div class="stat-box"><small>Total Focus</small><b id="statTotalTime">0 min</b></div>
+                    <div class="stat-box highlight-box"><small>Today</small><b id="statToday">0 min</b></div>
+                    <div class="stat-box streak-box"><small>Streak</small><b id="statStreak">0 🔥</b></div>
+                </div>
+                <div class="top-task-row" id="topTaskRow" style="display:none;">
+                    <span class="top-task-label">🏆 Most Focused:</span>
+                    <span id="topTaskName" class="top-task-name"></span>
+                    <span id="topTaskTime" class="top-task-time"></span>
+                </div>
+                <h3>Last 7 Days</h3>
+                <div class="chart-wrap"><canvas id="weekChart" height="120"></canvas></div>
+                <h3>Peak Focus Hours</h3>
+                <div class="chart-wrap"><canvas id="peakChart" height="90"></canvas></div>
+                <div class="history-header">
+                    <h3>Session History</h3>
+                    <button class="export-btn" onclick="exportCSV()">⬇ Export CSV</button>
+                </div>
+                <ul id="historyList" class="history-list"></ul>
+            </div>
+        </div>
+
+        <div id="calendar-section" class="section">
+            <div class="card cal-card">
+                <h2>Calendar</h2>
+                <p class="cal-subtitle">Days you focused are highlighted.</p>
+                <div class="calendar-mockup">
+                    <div class="cal-nav">
+                        <button class="cal-arrow" onclick="changeCalendarMonth(-1)">←</button>
+                        <div class="cal-header" id="calMonthName">MONTH</div>
+                        <button class="cal-arrow" onclick="changeCalendarMonth(1)">→</button>
+                    </div>
+                    <div class="cal-day-labels">
+                        <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+                    </div>
+                    <div class="cal-grid" id="calendarGrid"></div>
+                </div>
+                <h3 style="margin-top:18px;">Pomodoro History by Task</h3>
+                <div id="pomodoroHistory" class="pomodoro-history-list"></div>
+            </div>
+        </div>
+
+        <div id="heatmap-section" class="section">
+            <div class="card">
+                <h2>Year in Focus</h2>
+                <p class="cal-subtitle">Your focus activity over the past 12 months. Darker = more time focused.</p>
+                <div class="heatmap-legend-row">
+                    <span class="heatmap-legend-label">Less</span>
+                    <div class="heatmap-legend-cells">
+                        <div class="hc" style="background:rgba(94,255,163,0.07)"></div>
+                        <div class="hc" style="background:rgba(94,255,163,0.25)"></div>
+                        <div class="hc" style="background:rgba(94,255,163,0.45)"></div>
+                        <div class="hc" style="background:rgba(94,255,163,0.7)"></div>
+                        <div class="hc" style="background:rgba(94,255,163,1)"></div>
+                    </div>
+                    <span class="heatmap-legend-label">More</span>
+                </div>
+                <div class="heatmap-scroll-wrap">
+                    <div class="heatmap-month-labels" id="heatmapMonthLabels"></div>
+                    <div class="heatmap-row-wrap">
+                        <div class="heatmap-day-labels">
+                            <span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span>
+                        </div>
+                        <div class="heatmap-grid" id="heatmapGrid"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="subtaskModal" class="modal-overlay" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h3 id="modalTaskTitle">Subtasks</h3>
+            <button class="modal-close" onclick="closeSubtaskModal()">✕</button>
+        </div>
+        <div class="subtask-add-row">
+            <input type="text" id="subtaskInput" placeholder="Add subtask..." onkeydown="if(event.key==='Enter') addSubtask()">
+            <button onclick="addSubtask()">Add</button>
+        </div>
+        <ul id="subtaskList" class="subtask-list"></ul>
+        <div class="subtask-progress">
+            <div class="subtask-bar-wrap"><div class="subtask-bar-fill" id="subtaskBarFill"></div></div>
+            <span id="subtaskCount"></span>
+        </div>
+    </div>
+</div>
+
+<audio id="alertSound" src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg"></audio>
+<script src="script.js"></script>
+</body>
+</html>
